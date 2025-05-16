@@ -2,18 +2,19 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>274</width>
+    <height>320</height>
+   </rect>
+  </property>
   <property name="windowTitle">
    <string>Secure Chat</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="QLineEdit" name="lineEditUsername">
-      <property name="placeholderText">
-       <string>用户名</string>
-      </property>
-     </widget>
-    </item>
     <item>
      <widget class="QTextBrowser" name="textBrowserChat"/>
     </item>
@@ -30,6 +31,31 @@
        <widget class="QPushButton" name="btnSend">
         <property name="text">
          <string>发送</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="btnAddFriend">
+        <property name="text">
+         <string>添加好友</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnListFriends">
+        <property name="text">
+         <string>好友列表</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnSendPrivate">
+        <property name="text">
+         <string>私聊发送</string>
         </property>
        </widget>
       </item>

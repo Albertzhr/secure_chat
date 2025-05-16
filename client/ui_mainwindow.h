@@ -26,25 +26,24 @@ class Ui_MainWindow
 public:
     QWidget *centralwidget;
     QVBoxLayout *verticalLayout;
-    QLineEdit *lineEditUsername;
     QTextBrowser *textBrowserChat;
     QHBoxLayout *horizontalLayout;
     QLineEdit *lineEditMessage;
     QPushButton *btnSend;
+    QHBoxLayout *horizontalLayout_2;
+    QPushButton *btnAddFriend;
+    QPushButton *btnListFriends;
+    QPushButton *btnSendPrivate;
 
     void setupUi(QMainWindow *MainWindow)
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
+        MainWindow->resize(274, 320);
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         verticalLayout = new QVBoxLayout(centralwidget);
         verticalLayout->setObjectName(QString::fromUtf8("verticalLayout"));
-        lineEditUsername = new QLineEdit(centralwidget);
-        lineEditUsername->setObjectName(QString::fromUtf8("lineEditUsername"));
-
-        verticalLayout->addWidget(lineEditUsername);
-
         textBrowserChat = new QTextBrowser(centralwidget);
         textBrowserChat->setObjectName(QString::fromUtf8("textBrowserChat"));
 
@@ -65,6 +64,26 @@ public:
 
         verticalLayout->addLayout(horizontalLayout);
 
+        horizontalLayout_2 = new QHBoxLayout();
+        horizontalLayout_2->setObjectName(QString::fromUtf8("horizontalLayout_2"));
+        btnAddFriend = new QPushButton(centralwidget);
+        btnAddFriend->setObjectName(QString::fromUtf8("btnAddFriend"));
+
+        horizontalLayout_2->addWidget(btnAddFriend);
+
+        btnListFriends = new QPushButton(centralwidget);
+        btnListFriends->setObjectName(QString::fromUtf8("btnListFriends"));
+
+        horizontalLayout_2->addWidget(btnListFriends);
+
+        btnSendPrivate = new QPushButton(centralwidget);
+        btnSendPrivate->setObjectName(QString::fromUtf8("btnSendPrivate"));
+
+        horizontalLayout_2->addWidget(btnSendPrivate);
+
+
+        verticalLayout->addLayout(horizontalLayout_2);
+
         MainWindow->setCentralWidget(centralwidget);
 
         retranslateUi(MainWindow);
@@ -75,9 +94,11 @@ public:
     void retranslateUi(QMainWindow *MainWindow)
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "Secure Chat", nullptr));
-        lineEditUsername->setPlaceholderText(QCoreApplication::translate("MainWindow", "\347\224\250\346\210\267\345\220\215", nullptr));
         lineEditMessage->setPlaceholderText(QCoreApplication::translate("MainWindow", "\350\276\223\345\205\245\346\266\210\346\201\257...", nullptr));
         btnSend->setText(QCoreApplication::translate("MainWindow", "\345\217\221\351\200\201", nullptr));
+        btnAddFriend->setText(QCoreApplication::translate("MainWindow", "\346\267\273\345\212\240\345\245\275\345\217\213", nullptr));
+        btnListFriends->setText(QCoreApplication::translate("MainWindow", "\345\245\275\345\217\213\345\210\227\350\241\250", nullptr));
+        btnSendPrivate->setText(QCoreApplication::translate("MainWindow", "\347\247\201\350\201\212\345\217\221\351\200\201", nullptr));
     } // retranslateUi
 
 };

@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "network_client.h"
+#include <QTcpSocket>
+#include "protocol.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,23 +16,46 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    // 设置当前用户名
-    void setUsername(const QString &uname);
-
 private slots:
-    void on_btnSend_clicked();
-    void onMessageReceived(QString message);
+    // 用户/好友相关
+    void on_btnRegister_clicked();
+    void on_btnLogin_clicked();
+    void on_btnAddFriend_clicked();
+    void on_btnRefreshFriend_clicked();
+    void on_btnCheckRequests_clicked();
+    void on_btnSendMessage_clicked();
 
-    // ✅ 新增：三个操作按钮的槽函数
-    void on_btnAddFriend_clicked();      // 添加好友
-    void on_btnListFriends_clicked();    // 查看好友列表
-    void on_btnSendPrivate_clicked();    // 发送私聊消息
+    // 群聊相关
+    void on_btnCreateGroup_clicked();
+    void on_btnJoinGroup_clicked();
+    void on_btnRefreshGroupList_clicked();
+    void on_btnGroupSendMsg_clicked();
+    void on_btnFetchGroupMsg_clicked();
+    
+    void on_btnLogout_clicked();
+    void on_btnAuditLog_clicked();
+
+    void onReadyRead();
 
 private:
     Ui::MainWindow *ui;
-    NetworkClient *client;
-    QString username;
+    QTcpSocket *socket;
+    QString currentUsername;
+
+    void connectToServer();
+    void showResult(const ResultMessage &res);
+    void showFriendList(const FriendListMessage &msg);
+    void showPendingRequests(const PendingFriendListMessage &msg);
+    void showIncomingMessage(const QString &from, const QString &plain);
+
+    // 群聊相关
+    void showGroupList(const GroupListMessage &msg);
+    void showGroupIncomingMessage(const GroupChatMessage &msg);
+    void showGroupHistory(const FetchGroupChatRespMessage &resp);
+
+    // 加密/解密
+    void my_sm4_encrypt(const QByteArray &plain, unsigned char *cipher, int &cipher_len);
+    void my_sm4_decrypt(const unsigned char *cipher, int cipher_len, QByteArray &plain);
 };
 
 #endif // MAINWINDOW_H
-

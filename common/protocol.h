@@ -1,66 +1,192 @@
 #ifndef PROTOCOL_H
 #define PROTOCOL_H
 
-#define SERVER_PORT 6666
-#define MAX_MSG_LEN 1024
+#define MSG_REGISTER 1
+#define MSG_LOGIN    2
+#define MSG_RESULT   3
 
-// 消息类型常量
-#define MSG_CHAT             0   // 群聊消息
-#define MSG_LOGIN            1   // 登录请求
-#define MSG_LOGOUT           2   // 登出请求
-#define MSG_REGISTER         3   // 注册请求
-#define MSG_RESULT           4   // 登录/注册反馈
-#define MSG_PRIVATE_CHAT     5   // 私聊消息
-#define MSG_ADD_FRIEND       6   // 添加好友
-#define MSG_FRIEND_LIST      7   // 请求好友列表
-#define MSG_FRIEND_LIST_RET  8   // 返回好友列表
+#define MSG_ADD_FRIEND_REQ   10
+#define MSG_ADD_FRIEND_RESP  11
+#define MSG_FRIEND_LIST_REQ  12
+#define MSG_FRIEND_LIST_RESP 13
 
-// ================= 原有结构 ===================
+#define MSG_PENDING_FRIEND_REQ 14
+#define MSG_PENDING_FRIEND_LIST 15
+#define SALT_LEN     16
+#define MSG_PRIVATE_CHAT      20
+#define MSG_CHAT_PUSH         21
+#define MSG_FETCH_CHAT        22
+#define MSG_FETCH_CHAT_RESP   23
 
-// 群聊消息结构体
+#define USERNAME_LEN 32
+#define PASSWORD_LEN 64
+#define HASH_HEX_LEN 65
+#define PUBKEY_LEN   132
+#define FRIEND_LIST_MAX 50
+
+#define CHAT_MAX_LEN 256
+#define CHAT_HISTORY_MAX 100
+
+#define MSG_GROUP_CREATE        100
+#define MSG_GROUP_CREATE_RESP  101
+#define MSG_GROUP_LIST_REQ     102
+#define MSG_GROUP_LIST_RESP    103
+#define MSG_GROUP_JOIN         104
+#define MSG_GROUP_JOIN_RESP    105
+#define MSG_GROUP_MEMBER_LIST  106
+#define MSG_GROUP_SEND_MSG     110
+#define MSG_GROUP_PUSH_MSG     111
+#define MSG_FETCH_GROUP_MSG    112
+#define MSG_FETCH_GROUP_RESP   113
+
+#define GROUP_NAME_LEN     32
+#define GROUP_MAX_MEMBERS  50
+#define GROUP_LIST_MAX     20
+#define GROUP_CHAT_MAX     100
+
+#define MSG_LOG_AUDIT_REQ 200
+#define MSG_LOG_AUDIT_RESP 201
+
+#define LOG_CONTENT_MAX 2048
 typedef struct {
-    int msg_type;              // MSG_CHAT
-    char sender[32];           // 用户名
-    char message[MAX_MSG_LEN]; // 内容
-} ChatMessage;
-
-// 注册 / 登录 请求结构体
-typedef struct {
-    int msg_type;              // MSG_LOGIN or MSG_REGISTER
-    char username[32];
-    char password[64];         // 明文密码（服务端会做加盐 SM3）
+    int type;
+    char username[USERNAME_LEN];
+    char password[PASSWORD_LEN];
+    char sm2_pubkey[PUBKEY_LEN];
 } AuthMessage;
 
-// 登录/注册反馈
 typedef struct {
-    int msg_type;              // MSG_RESULT
-    int success;               // 1 成功 / 0 失败
-    char message[128];         // 反馈信息
+    int type;
+    int success;
+    char message[128];
 } ResultMessage;
 
-// ================ 新增结构 ===================
-
-// 私聊消息结构体
 typedef struct {
-    int msg_type;              // MSG_PRIVATE_CHAT
-    char from[32];             // 发送方
-    char to[32];               // 接收方
-    char message[MAX_MSG_LEN]; // 消息内容
-} PrivateMessage;
+    int type;
+    char from[USERNAME_LEN];
+    char to[USERNAME_LEN];
+} FriendRequestMessage;
 
-// 添加好友请求
 typedef struct {
-    int msg_type;              // MSG_ADD_FRIEND
-    char requester[32];        // 谁添加
-    char target[32];           // 添加谁
-} AddFriendMessage;
+    int type;
+    char from[USERNAME_LEN];
+    char to[USERNAME_LEN];
+    int accept;
+} FriendResponseMessage;
 
-// 获取好友列表请求（发出用 MSG_FRIEND_LIST，返回用 MSG_FRIEND_LIST_RET）
 typedef struct {
-    int msg_type;              // MSG_FRIEND_LIST or MSG_FRIEND_LIST_RET
-    char username[32];         // 谁在查
-    char list[MAX_MSG_LEN];    // 好友列表（MSG_FRIEND_LIST_RET中使用，\n 分隔）
+    int type;
+    char username[USERNAME_LEN];
+    char friends[FRIEND_LIST_MAX][USERNAME_LEN];
+    int count;
 } FriendListMessage;
 
-#endif // PROTOCOL_H
+// 好友请求列表
+typedef struct {
+    int type;
+    char username[USERNAME_LEN];
+    char applicants[FRIEND_LIST_MAX][USERNAME_LEN];
+    int count;
+} PendingFriendListMessage;
 
+// 私聊：加密消息传递
+typedef struct {
+    int type;
+    char from[USERNAME_LEN];
+    char to[USERNAME_LEN];
+    unsigned char sm4_cipher[CHAT_MAX_LEN];
+    int cipher_len;
+} PrivateChatMessage;
+
+// 消息推送
+typedef struct {
+    int type;
+    char from[USERNAME_LEN];
+    char to[USERNAME_LEN];
+    unsigned char sm4_cipher[CHAT_MAX_LEN];
+    int cipher_len;
+} ChatPushMessage;
+
+// 拉取所有未读消息
+typedef struct {
+    int type;
+    char username[USERNAME_LEN];
+} FetchChatMessage;
+
+typedef struct {
+    int type;
+    int count;
+    PrivateChatMessage messages[CHAT_HISTORY_MAX];
+} FetchChatRespMessage;
+
+typedef struct {
+    int type;
+    char groupname[GROUP_NAME_LEN];
+    char creator[USERNAME_LEN];
+} GroupCreateMessage;
+
+typedef struct {
+    int type;
+    int success;
+    char message[128];
+} GroupCreateRespMessage;
+
+typedef struct {
+    int type;
+    char username[USERNAME_LEN];
+    char groups[GROUP_LIST_MAX][GROUP_NAME_LEN];
+    int count;
+} GroupListMessage;
+
+typedef struct {
+    int type;
+    char groupname[GROUP_NAME_LEN];
+    char username[USERNAME_LEN];
+} GroupJoinMessage;
+
+typedef struct {
+    int type;
+    int success;
+    char message[128];
+} GroupJoinRespMessage;
+
+typedef struct {
+    int type;
+    char groupname[GROUP_NAME_LEN];
+    char members[GROUP_MAX_MEMBERS][USERNAME_LEN];
+    int count;
+} GroupMemberListMessage;
+
+// 群聊消息
+typedef struct {
+    int type;
+    char groupname[GROUP_NAME_LEN];
+    char sender[USERNAME_LEN];
+    unsigned char sm4_cipher[CHAT_MAX_LEN];
+    int cipher_len;
+} GroupChatMessage;
+
+typedef struct {
+    int type;
+    char groupname[GROUP_NAME_LEN];
+    GroupChatMessage messages[GROUP_CHAT_MAX];
+    int count;
+} FetchGroupChatRespMessage;
+
+
+
+
+
+typedef struct {
+    int type;
+    char username[USERNAME_LEN];
+} LogAuditReqMessage;
+
+typedef struct {
+    int type;
+    int success;             // 0=失败 1=成功
+    char message[128];       // 错误/提示
+    char content[LOG_CONTENT_MAX]; // 日志内容
+} LogAuditRespMessage;
+
+#endif

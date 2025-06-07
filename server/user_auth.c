@@ -1,60 +1,66 @@
+// user_auth.c
+#include "protocol.h"
 #include "user_auth.h"
 #include "database.h"
 #include "crypto.h"
 #include <string.h>
 #include <stdio.h>
 
-int handle_register(const AuthMessage *req, ResultMessage *res) {
-    char salt[33];
-    char hash[HASH_HEX_LENGTH];
-
-    char dummy_salt[33], dummy_hash[HASH_HEX_LENGTH];
-    if (get_user_salt_and_hash(req->username, dummy_salt, dummy_hash)) {
-        res->msg_type = MSG_RESULT;
-        res->success = 0;
-        snprintf(res->message, sizeof(res->message), "注册失败：用户已存在");
+int handle_register(const AuthMessage *msg, ResultMessage *result) {
+    if (user_exists(msg->username)) {
+        result->type = MSG_RESULT;
+        result->success = 0;
+        strcpy(result->message, "用户名已存在");
         return 0;
     }
+    unsigned char salt[SALT_LEN];
+    unsigned char hash[32];
+    char hash_hex[HASH_HEX_LEN], salt_hex[SALT_LEN*2+1];
 
-    generate_salt(salt);
-    hash_password(req->password, salt, hash);
+    generate_salt(salt, SALT_LEN);
+    sm3_hash_with_salt(msg->password, salt, SALT_LEN, hash);
+    bin2hex(hash, 32, hash_hex);
+    bin2hex(salt, SALT_LEN, salt_hex);
 
-    if (!insert_user(req->username, salt, hash)) {
-        res->msg_type = MSG_RESULT;
-        res->success = 0;
-        snprintf(res->message, sizeof(res->message), "注册失败：写入数据库失败");
+    if (!add_user(msg->username, hash_hex, salt_hex, msg->sm2_pubkey)) {
+        result->type = MSG_RESULT;
+        result->success = 0;
+        strcpy(result->message, "数据库写入失败");
         return 0;
     }
-
-    res->msg_type = MSG_RESULT;
-    res->success = 1;
-    snprintf(res->message, sizeof(res->message), "注册成功");
+    result->type = MSG_RESULT;
+    result->success = 1;
+    strcpy(result->message, "注册成功");
     return 1;
 }
 
-int handle_login(const AuthMessage *req, ResultMessage *res) {
-    char salt[33];
-    char stored_hash[HASH_HEX_LENGTH];
-    char input_hash[HASH_HEX_LENGTH];
-
-    if (!get_user_salt_and_hash(req->username, salt, stored_hash)) {
-        res->msg_type = MSG_RESULT;
-        res->success = 0;
-        snprintf(res->message, sizeof(res->message), "登录失败：用户不存在");
+int handle_login(const AuthMessage *msg, ResultMessage *result) {
+    char db_hash[HASH_HEX_LEN], db_salt[SALT_LEN*2+1], db_pubkey[PUBKEY_LEN] = {0};
+    if (!get_user(msg->username, db_hash, db_salt, db_pubkey)) {
+        result->type = MSG_RESULT;
+        result->success = 0;
+        strcpy(result->message, "用户名不存在");
         return 0;
     }
+    unsigned char salt[SALT_LEN], hash[32];
+    // hex to bin
+    for (int i = 0; i < SALT_LEN; ++i) {
+        sscanf(&db_salt[i*2], "%2hhx", &salt[i]);
+    }
+    sm3_hash_with_salt(msg->password, salt, SALT_LEN, hash);
+    char hash_hex[HASH_HEX_LEN];
+    bin2hex(hash, 32, hash_hex);
 
-    hash_password(req->password, salt, input_hash);
-    if (strcmp(input_hash, stored_hash) != 0) {
-        res->msg_type = MSG_RESULT;
-        res->success = 0;
-        snprintf(res->message, sizeof(res->message), "登录失败：密码错误");
+    if (strcmp(hash_hex, db_hash) == 0) {
+        result->type = MSG_RESULT;
+        result->success = 1;
+        strcpy(result->message, "登录成功");
+        return 1;
+    } else {
+        result->type = MSG_RESULT;
+        result->success = 0;
+        strcpy(result->message, "密码错误");
         return 0;
     }
-
-    res->msg_type = MSG_RESULT;
-    res->success = 1;
-    snprintf(res->message, sizeof(res->message), "登录成功，欢迎 %s", req->username);
-    return 1;
 }
 

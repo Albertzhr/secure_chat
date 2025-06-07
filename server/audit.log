@@ -1,0 +1,10 @@
+系统已启动，等待审计事件...
+[2025-06-06 11:47:13] USER=admin ACTION=login TARGET=登录成功
+[2025-06-06 11:47:15] USER=admin ACTION=get_friend_list TARGET=
+[2025-06-06 11:47:34] USER=zhu ACTION=login TARGET=登录成功
+[2025-06-06 11:47:35] USER=zhu ACTION=get_friend_list TARGET=
+[2025-06-06 11:47:36] USER=admin ACTION=view_audit_log TARGET=success
+[2025-06-06 11:48:59] USER=admin ACTION=login TARGET=登录成功
+[2025-06-06 11:49:00] USER=admin ACTION=get_friend_list TARGET=
+[2025-06-06 11:49:01] USER=admin ACTION=view_audit_log TARGET=success
+[2025-06-06 11:49:15] USER=admin ACTION=view_audit_log TARGET=success
